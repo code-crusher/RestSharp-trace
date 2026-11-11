@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace RestSharp.Tests.Integrated;
 
 #pragma warning disable xUnit1031 // Blocking calls in tests are intentional — we are testing sync-over-async deadlock safety
@@ -53,5 +55,33 @@ public sealed class SyncRequestTests(WireMockTestServer server) : IClassFixture<
         });
 
         completed.IsCompleted.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Parallel_sync_execute_should_not_starve_the_thread_pool() {
+        // Regression test for https://github.com/restsharp/RestSharp/issues/2375
+        // Sync Execute() used to be much slower than ExecuteAsync().Result under
+        // parallel load, because RunSync queued the whole async pipeline as an
+        // extra thread pool work item while the caller blocked. RunSync now starts
+        // the task directly on the calling thread when no synchronization context
+        // is installed, so sync calls no longer queue additional work items.
+        // The absolute bound is deliberately generous: the point is to catch
+        // starvation that adds tens of seconds per call, not to benchmark.
+        const int total = 20;
+
+        using var client = new RestClient(server.Url!);
+        var sw = Stopwatch.StartNew();
+
+        Parallel.For(
+            0,
+            total,
+            _ => {
+                var request  = new RestRequest("success");
+                var response = client.ExecuteGet(request);
+                response.IsSuccessStatusCode.Should().BeTrue();
+            }
+        );
+
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(60), "parallel sync calls should not starve the thread pool");
     }
 }

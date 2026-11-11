@@ -17,16 +17,22 @@ namespace RestSharp;
 
 static class AsyncHelpers {
     /// <summary>
-    /// Executes a task on the thread pool, waits for it to complete, and then returns the result.
+    /// Executes a task synchronously and returns the result.
     /// </summary>
     /// <param name="func">Callback for asynchronous task to run</param>
     /// <typeparam name="T">Return type for the task</typeparam>
     /// <returns>Return value from the task</returns>
     /// <remarks>
-    /// Every RunSync call requires at least one thread pool thread. If multiple threads call
-    /// RunSync simultaneously, then there is a possibility the threadpool could be starved of threads.
+    /// When the current thread has no synchronization context (console apps, ASP.NET Core,
+    /// thread pool threads), the task is started directly on the calling thread. Starting the
+    /// task directly means that no extra thread pool work item is queued, which is important
+    /// because blocking callers that also queue work items can starve the thread pool when
+    /// many sync calls run in parallel (see issue #2375).
+    /// When a synchronization context is present (WinForms, WPF), the task is offloaded to the
+    /// thread pool so that continuations cannot be marshalled back to the blocked caller and deadlock.
     /// </remarks>
     public static T RunSync<T>(Func<Task<T>> func) {
-        return Task.Run(func).GetAwaiter().GetResult();
+        var task = SynchronizationContext.Current == null ? func() : Task.Run(func);
+        return task.GetAwaiter().GetResult();
     }
 }
