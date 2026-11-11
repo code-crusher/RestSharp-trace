@@ -131,6 +131,29 @@ public class RestClientTests {
     }
 
     [Fact]
+    public void ConfigureDefaultParameters_sets_user_agent_for_cached_httpClient_instance() {
+        // arrange
+        var baseUrl = new Uri($"https://fake.api/{Guid.NewGuid()}");
+        var options = new RestClientOptions { BaseUrl = baseUrl, UserAgent = "MyApp/1.0" };
+
+        // act
+        using var client1 = new RestClient(options, useClientFactory: true);
+        using var client2 = new RestClient(options, useClientFactory: true);
+
+        //assert
+        client1.HttpClient.Should().BeSameAs(client2.HttpClient);
+
+        foreach (var restClient in new[] { client1, client2 }) {
+            Assert.Single(
+                restClient.DefaultParameters,
+                parameter => parameter is { Type: ParameterType.HttpHeader, Name: KnownHeaders.UserAgent, Value: string valueAsString } &&
+                    valueAsString == options.UserAgent
+            );
+            Assert.Empty(restClient.HttpClient.DefaultRequestHeaders.UserAgent);
+        }
+    }
+
+    [Fact]
     public void ConfigureDefaultParameters_sets_user_agent_given_httpClient_instance() {
         // arrange
         var httpClient    = new HttpClient();

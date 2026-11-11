@@ -86,6 +86,10 @@ public partial class RestClient : IRestClient {
             HttpClient         = GetClient();
         }
 
+        // Default parameters belong to the RestClient instance, so they must be configured
+        // even when the HttpClient came from the cache and was not created anew.
+        ConfigureDefaultParameters(options);
+
         return;
 
         HttpClient GetClient() {
@@ -97,7 +101,6 @@ public partial class RestClient : IRestClient {
             // We will use Options.Timeout in ExecuteAsInternalAsync method
             httpClient.Timeout = Timeout.InfiniteTimeSpan;
 
-            ConfigureDefaultParameters(options);
             configureDefaultHeaders?.Invoke(httpClient.DefaultRequestHeaders);
             return httpClient;
         }
