@@ -111,6 +111,9 @@ public abstract class RequestTestsBase(bool disposeClient) {
         public Task<RestResponse> ExecuteAsync(RestRequest request, CancellationToken cancellationToken = default)
             => innerClient.ExecuteAsync(request, cancellationToken);
 
+        public Task<RestResponse<T>> ExecuteAsync<T>(RestRequest request, CancellationToken cancellationToken = default)
+            => innerClient.ExecuteAsync<T>(request, cancellationToken);
+
         public Task<Stream> DownloadStreamAsync(RestRequest request, CancellationToken cancellationToken = default)
             => innerClient.DownloadStreamAsync(request, cancellationToken);
     }

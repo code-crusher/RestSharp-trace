@@ -41,6 +41,15 @@ public interface IRestClient : IDisposable {
     Task<RestResponse> ExecuteAsync(RestRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Executes the request asynchronously, authenticating if needed.
+    /// The response content then gets deserialized to <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">Target deserialization type</typeparam>
+    /// <param name="request">Request to be executed</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task<RestResponse<T>> ExecuteAsync<T>(RestRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// A specialized method to download files as streams.
     /// </summary>
     /// <param name="request">Pre-configured request instance.</param>

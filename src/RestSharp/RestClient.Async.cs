@@ -44,6 +44,13 @@ public partial class RestClient {
 
     /// <inheritdoc />
     [PublicAPI]
+    public async Task<RestResponse<T>> ExecuteAsync<T>(RestRequest request, CancellationToken cancellationToken = default) {
+        var response = await ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
+        return await Serializers.Deserialize<T>(request, response, Options, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    [PublicAPI]
     public async Task<Stream?> DownloadStreamAsync(RestRequest request, CancellationToken cancellationToken = default) {
         // Make sure we only read the headers, so we can stream the content body efficiently
         request.CompletionOption = HttpCompletionOption.ResponseHeadersRead;

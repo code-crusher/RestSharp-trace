@@ -33,19 +33,19 @@ public static partial class RestClientExtensions {
             => client.Serializers.Deserialize<T>(response.Request, response, client.Options, cancellationToken);
 
         /// <summary>
-        /// Executes the request asynchronously, authenticating if needed
+        /// Executes the request asynchronously, authenticating if needed.
+        /// The response content then gets deserialized to <typeparamref name="T"/>.
         /// </summary>
         /// <typeparam name="T">Target deserialization type</typeparam>
         /// <param name="request">Request to be executed</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        public async Task<RestResponse<T>> ExecuteAsync<T>(
+        public Task<RestResponse<T>> ExecuteAsync<T>(
             RestRequest       request,
             CancellationToken cancellationToken = default
         ) {
             Ensure.NotNull(request, nameof(request));
 
-            var response = await client.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
-            return await client.Serializers.Deserialize<T>(request, response, client.Options, cancellationToken).ConfigureAwait(false);
+            return client.ExecuteAsync<T>(request, cancellationToken);
         }
 
         /// <summary>
